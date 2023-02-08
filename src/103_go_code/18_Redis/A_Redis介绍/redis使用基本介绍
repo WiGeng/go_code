@@ -1,0 +1,177 @@
+Redis
+
+基本介绍
+	1. Redis 是NoSOL数据库,不是传统的关系型数据库【官网:https://redis.iol 和 http://www.redis.cnl】
+	2.【Remote Dictionary Server】Redis性能非常高,单机能够达到15W qps,通常可以做缓存,也可以做持久化
+	3. 是完全开源免费的,高性能的(key/value)分布式内存数据库,基于内存运行并支持持久化的NOSQL数据库,是最热门的NoSal数据库之一,
+	也称为数据结构服务器
+
+Redis的基本使用
+说明:Redis 安装好后,默认有16个数据库,初始默认使用9号库,编号是0..15
+	1.添加key-val set
+	2.查看当前redis的 所有key [key *]
+	3.获取key对应的值 [get key]
+	4.切换redis 数据库 [select index]
+	5.如何查看当前数据库的key-val数量 [dbsize]
+	6.清空当前数据库的key-val和清空所有数据库的key-val [flushdb flushall]
+
+Redis的增删改查[CRUD]操作:
+  Redis的五大数据类型:
+		Redis的五大数据类型是:string(字符串)、Hash(哈希) 、List(列表)、Set(集合)和zset(sorted set: 有序集合)
+
+	String(字符串)-介绍:
+		string是redis最基本的类型,一个key对应一个value
+		string类型是二进制安全的,除普通的字符串外,也可以存放图片等数据
+		redis中字符串value最大是512M
+		字符串的操作细节:[http://redisdoc.com/string/index.html]
+			SETEX key seconds value       案例:SETEX k1 10 hello
+			MSET key value [key value …]  案例:MSET date "2012.3.30" time "11:00 a.m." weather "sunny"
+			MGET key [key …]              案例:MGET date time weather
+
+	Hash (哈希,类似golang里的Map)-介绍
+		Redis hash 是一个键值对集合。var user1 map[string]string
+		Redis hash是一个string类型的field和value的映射表,hash特别适合用于存储对象。
+			HSET people jack "Jack Sparrow"
+			HSET people gump "Forrest Gump"
+			
+
+			HGETALL people
+				1) "jack"          # 域
+				2) "Jack Sparrow"  # 值
+				3) "gump"
+				4) "Forrest Gump"
+
+			HDEL HDEL people jack  # 删除哈希表 key 中的一个或多个指定域,不存在的域将被忽略
+		Hash-使用细节和注意事项
+			在给user设置 name 和age时,前面我们是一步一步设置,使用hmset和hmget可以一次性来设置多个filed的值和返回多个field的值
+			HMSET key field value [field value …] #同时将多个 field-value (域-值)对设置到哈希表 key 中。
+				案例:HMSET website google www.google.com yahoo www.yahoo.com
+
+			HMGET key field [field …] #返回哈希表 key 中,一个或多个给定域的值。
+				案例:HMGET website google yahoo
+
+			HLEN key  #返回哈希表 key 中域的数量。
+				案例:HLEN website
+
+	List(列表)-介绍
+		列表是简单的字符串列表,按照插入顺序排序。你可以添加一个元素到列表的头部(左边)或者尾部(右边)
+		List本质是个链表,List的元素是有序的,元素的值可以重复
+		List-使用细节说明和注意事项
+			LPUSH key value [value …] #将一个或多个值 value 插入到列表 key 的表头
+				案例:LPUSH mylist a b c
+					 LRANGE mylist 0 -1   #-1 表示最后一个元素
+					 1) "c"
+				 	 2) "b"
+					 3) "a"
+
+			RPUSH key value [value …] #将一个或多个值 value 插入到列表 key 的表尾(最右边)
+				案例:RPUSH mylist a b c
+					 LRANGE mylist 0 -1   #-1 表示最后一个元素
+					 1) "a"
+					 2) "b"
+					 3) "c"
+
+			LRANGE key start stop #返回列表 key 中指定区间内的元素,区间以偏移量 start 和 stop 指定
+
+			LPOP key #移除并返回列表 key 的头元素
+				案例:redis> LLEN course
+					(integer) 0
+
+					redis> RPUSH course algorithm001
+					(integer) 1
+
+					redis> RPUSH course c++101
+					(integer) 2
+
+					redis> LPOP course  # 移除头元素
+					"algorithm001"
+
+			RPOP key #移除并返回列表 key 的尾元素
+				案例:redis> RPUSH mylist "one"
+					(integer) 1
+
+					redis> RPUSH mylist "two"
+					(integer) 2
+
+					redis> RPUSH mylist "three"
+					(integer) 3
+
+					redis> RPOP mylist           # 返回被弹出的元素
+					"three"
+
+					redis> LRANGE mylist 0 -1    # 列表剩下的元素
+					1) "one"
+					2) "two"
+			DEL key #移除list中所有的元素
+				案例:DEL mylist
+	Set (集合) -介绍:
+		Redis的Set是string类型的无序集合
+		底层是HashTable数据结构,set也是存放很多字符串元素,字符串元素是无序的,而且元素的值不能重复
+		Set-使用细节说明和注意事项
+			SADD key member [member …] # 将一个或多个 member 元素加入到集合 key 当中,已经存在于集合的 member 元素将被忽略
+			案例:# 添加单个元素
+				 redis> SADD bbs "discuz.net"
+				 (integer) 1
+
+				 # 添加重复元素
+				 redis> SADD bbs "discuz.net"
+				 (integer) 0
+
+				 # 添加多个元素
+				 redis> SADD bbs "tianya.cn" "groups.google.com"
+				 (integer) 2
+
+				 redis> SMEMBERS bbs
+				 1) "discuz.net"
+				 2) "groups.google.com"
+				 3) "tianya.cn"
+
+			SMEMBERS key # 返回集合 key 中的所有成员,不存在的 key 被视为空集合
+			案例:# key 不存在或集合为空
+				 redis> EXISTS not_exists_key
+				 (integer) 0
+
+				 redis> SMEMBERS not_exists_key
+				 (empty list or set)
+
+				 # 非空集合
+				 redis> SADD language Ruby Python Clojure
+				 (integer) 3
+
+				 redis> SMEMBERS language
+				 1) "Python"
+				 2) "Ruby"
+			  	 3) "Clojure"
+
+			SISMEMBER key member  # 判断 member 元素是否集合 key 的成员。 是,返回1；不是,返回0
+			案例:redis> SMEMBERS joes_movies
+				 1) "hi, lady"
+				 2) "Fast Five"
+				 3) "2012"
+
+				 redis> SISMEMBER joes_movies "bet man"
+				 (integer) 0
+
+				 redis> SISMEMBER joes_movies "Fast Five"
+				 (integer) 1
+
+			SREM key member [member …] # 移除集合 key 中的一个或多个 member 元素,不存在的 member 元素会被忽略
+			案例:redis> SMEMBERS languages
+				 1) "c"
+				 2) "lisp"
+				 3) "python"
+				 4) "ruby"
+				 # 移除单个元素
+				 redis> SREM languages ruby
+				 (integer) 1
+
+				 # 移除不存在元素
+				 redis> SREM languages non-exists-language
+				 (integer) 0
+
+				 # 移除多个元素
+				 redis> SREM languages lisp python c
+				 (integer) 3
+				 redis> SMEMBERS languages
+				 (empty list or set)
+
